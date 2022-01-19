@@ -12,7 +12,8 @@ H = 21.0
 fens, fes = Q4block(L, H, 3, 5)
 fens.xyz = xyz3(fens)
 plots = cat(plot_nodes(fens),
-    plot_midsurface(fens, fes; facecolor = "rgb(15, 15, 225)", lwidth = 4),
+    plot_midsurface(fens, fes; facecolor = "rgb(15, 15, 225)", lwidth = 4, 
+        lighting = attr(diffuse=1, fresnel=4, specular=0.5), lightposition = attr(x = 6, y = 7, z = -2)),
     dims = 1)
 layout = default_layout_3d(autosize = true)
 # layout = default_layout_3d(width=400, height=400)
