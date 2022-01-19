@@ -353,7 +353,7 @@ function plot_midsurface(fens, fes; kwargs...)
     facecolors = fill(facecolor, count(fes))
     faces = connasarray(fes).-1
     t = PlotlyBase.GenericTrace[]
-    push!(t, mesh3d(;x=x[:, 1]+u[:, 1], y=x[:, 2]+u[:, 2], z=x[:, 3]+u[:, 3], i=faces[:, 1], j=faces[:, 2], k=faces[:, 3], facecolor=facecolors))
+    push!(t, mesh3d(;x=x[:, 1]+u[:, 1], y=x[:, 2]+u[:, 2], z=x[:, 3]+u[:, 3], i=faces[:, 1], j=faces[:, 2], k=faces[:, 3], facecolor=facecolors, kwargs...))
     if nodesperelem(fes)   == 4
         push!(t, mesh3d(;x=x[:, 1]+u[:, 1], y=x[:, 2]+u[:, 2], z=x[:, 3]+u[:, 3], i=faces[:, 4], j=faces[:, 1], k=faces[:, 3], facecolor=facecolors, kwargs...))
     end
