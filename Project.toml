@@ -1,7 +1,7 @@
 name = "VisualStructures"
 uuid = "4ff8b045-ea8a-4ad0-a12a-3d0ba4e7e6b4"
 authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 FinEtools = "91bb5406-6c9a-523d-811d-0644c4229550"
@@ -13,7 +13,7 @@ Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 
 [compat]
 FinEtools = "^5.3"
-FinEtoolsFlexStructures = "^1.3"
+FinEtoolsFlexStructures = "^1"
 JSON = "^0.21"
 PlotlyJS = "^0.18"
 Revise = "^3.3"
