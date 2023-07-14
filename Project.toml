@@ -13,8 +13,7 @@ REPLHistory = "a5566ce3-012c-4b09-85b8-62131f0c3f36"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 
 [compat]
-FinEtools = "^6"
-FinEtoolsFlexStructures = "^1"
+FinEtools = "^7"
 JSON = "^0.21"
 PlotlyJS = "^0.18"
 Revise = "^3"
