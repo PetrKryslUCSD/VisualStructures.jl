@@ -180,7 +180,7 @@ function plot_solid(fens, fes; kwargs...)
     xt = fill(0.0, size(x0))
     R1I = Matrix(1.0 * I, 3, 3)
     R1J = Matrix(1.0 * I, 3, 3)
-    if fes.crosssection.shape == "circle"
+    if delegateof(fes).crosssection.shape == "circle"
         nseg = 13
         v = vec((collect(1:nseg+1).-1)./nseg)
         c = cos.(2*pi*v);
@@ -194,7 +194,7 @@ function plot_solid(fens, fes; kwargs...)
         facecolors = fill(facecolor, 2*nseg)
         buffers = (F0, x0, xt, c, s, xc, faces, facecolors)
         _draw = _circular
-    elseif fes.crosssection.shape == "rectangle"
+    elseif delegateof(fes).crosssection.shape == "rectangle"
         faces = fill(0, 2*4, 3)
         for i in 1:4
             faces[i, :] .= (i+1, i, i+4+1)
