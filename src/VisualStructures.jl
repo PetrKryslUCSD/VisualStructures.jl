@@ -4,6 +4,7 @@ using FinEtools
 using PlotlyJS
 using JSON
 using LinearAlgebra: norm, I
+using Statistics
 
 const BACKGROUNDCOLOR = "rgb(230, 230,230)"
 
@@ -128,8 +129,8 @@ function _circular(dimensions, buffers, x1x2_vector, R1I, R1J; kwargs...)
     FtJ=R1J*F0;
     nseg = length(c)-1
     for j in 1:nseg+1
-        xc[j,:] = xt[1,:] + eecc[1]*FtI[:,1] + (eecc[2]+radius)*c[j]*FtI[:,2] + (eecc[3]+radius)*s[j]*FtI[:,3];
-        xc[j+(nseg+1),:] = xt[2,:] + eecc[2]*FtI[:,1] + (eecc[2]+radius)*c[j]*FtI[:,2] + (eecc[3]+radius)*s[j]*FtI[:,3];
+        xc[j,:]          = xt[1,:] + eecc[1]*FtI[:,1] + eecc[3]*FtI[:,2] + eecc[4]*FtI[:,3] + radius*c[j]*FtI[:,2] + radius*s[j]*FtI[:,3];
+        xc[j+(nseg+1),:] = xt[2,:] + eecc[2]*FtJ[:,1] + eecc[3]*FtJ[:,2] + eecc[4]*FtJ[:,3] + radius*c[j]*FtI[:,2] + radius*s[j]*FtI[:,3];
     end
     return mesh3d(;x=xc[:, 1],y=xc[:, 2], z=xc[:, 3], i=faces[:, 1].-1, j=faces[:, 2].-1, k=faces[:, 3].-1, facecolor=facecolors, kwargs...)
 end
@@ -141,8 +142,8 @@ function _rectangular(dimensions, buffers, x1x2_vector, R1I, R1J; kwargs...)
     FtI=R1I*F0;
     FtJ=R1J*F0;
     for j in 1:4+1
-        xc[j,:] = xt[1,:] + eecc[1]*FtI[:,1] + c[j]*(eecc[2]+b)*FtI[:,2] + s[j]*(eecc[3]+h)*FtI[:,3];
-        xc[j+(4+1),:] = xt[2,:] + eecc[2]*FtI[:,1] + c[j]*(eecc[2]+b)*FtJ[:,2] + s[j]*(eecc[3]+h)*FtJ[:,3];
+        xc[j,:]       = xt[1,:] + eecc[1]*FtI[:,1] + eecc[3]*FtI[:,2] + eecc[4]*FtI[:,3] + c[j]*b*FtI[:,2] + s[j]*h*FtI[:,3];
+        xc[j+(4+1),:] = xt[2,:] + eecc[2]*FtJ[:,1] + eecc[3]*FtJ[:,2] + eecc[4]*FtJ[:,3] + c[j]*b*FtJ[:,2] + s[j]*h*FtJ[:,3];
     end
     return mesh3d(;x=xc[:, 1],y=xc[:, 2], z=xc[:, 3], i=faces[:, 1].-1, j=faces[:, 2].-1, k=faces[:, 3].-1, facecolor=facecolors, kwargs...)
 end
@@ -410,14 +411,14 @@ function plot_triads(fens; kwargs...)
     end
 
     R1I = Matrix(1.0 * I, 3, 3)
-    
+
     colors = ["rgb(255, 15, 25)", "rgb(15, 255, 25)", "rgb(25, 15, 255)"]
     
     t = PlotlyBase.GenericTrace[]
     for i in 1:count(fens)
         R1I[:] .= R[i, :]
         for tv in 1:3
-            X = fill(0.0, 2)
+            X = fill(0.0, 2) # must allocate here, the scatter3d stores reference to it
             Y = fill(0.0, 2)
             Z = fill(0.0, 2)
             X[1] = x[i, 1] .+ u[i, 1]
@@ -429,6 +430,83 @@ function plot_triads(fens; kwargs...)
             push!(t, scatter3d(;x=X, y=Y, z=Z, mode="lines", line=attr(color=colors[tv], width=lwidth), kwargs...))
         end
     end
+    return t
+end
+
+"""
+    plot_local_frames(fens, fes; kwargs...)
+
+Plot the element local frames.
+
+- `x`: array of node locations
+- `u`: array of node displacements
+- `R`: array of node rotation matrices
+- `triad_length`: how long should a triad arrow be?
+- `lwidth`: house thick should the lines be?
+"""
+function plot_local_frames(fens, fes; kwargs...)
+    dfes = delegateof(fes)
+    x = deepcopy(fens.xyz)
+    if :x in keys(kwargs)
+        x = kwargs[:x]; kwargs = removepair(kwargs, :x)
+    end
+    u = fill(0.0, size(x))
+    if :u in keys(kwargs)
+        u = kwargs[:u]; kwargs = removepair(kwargs, :u)
+    end
+    R = fill(0.0, size(x, 1), 9)
+    for j in 1:size(R, 1)
+        R[j, :] .= Matrix(1.0 * I, 3, 3)[:]
+    end
+    if :R in keys(kwargs)
+        R = kwargs[:R]; kwargs = removepair(kwargs, :R)
+    end
+    triad_length = 1.0
+    if :triad_length in keys(kwargs)
+        triad_length = kwargs[:triad_length]; kwargs = removepair(kwargs, :triad_length)
+    end
+    lwidth = 4
+    if :lwidth in keys(kwargs)
+        lwidth = kwargs[:lwidth]; kwargs = removepair(kwargs, :lwidth)
+    end
+
+    colors = ["rgb(255, 15, 25)", "rgb(15, 255, 25)", "rgb(25, 15, 255)"]
+
+    F0 = fill(0.0, 3, 3)
+    x0 = fill(0.0, 2, 3)
+    xt = fill(0.0, size(x0))
+    R1I = Matrix(1.0 * I, 3, 3)
+    R1J = Matrix(1.0 * I, 3, 3)
+
+
+    t = PlotlyBase.GenericTrace[]
+    for i in 1:count(fes)
+        c = fes.conn[i]
+        x0[1, :] .= x[c[1], :]
+        x0[2, :] .= x[c[2], :]
+        xt[1, :] .= x[c[1], :] .+ u[c[1], :]
+        xt[2, :] .= x[c[2], :] .+ u[c[2], :]
+        centroid = mean(xt; dims=1)
+        R1I[:] .= R[c[1], :]
+        R1J[:] .= R[c[2], :]
+        L0, F0 = _beam_local_frame!(F0, x0, dfes.x1x2_vector[i])
+        FtI=R1I*F0;
+        FtJ=R1J*F0;
+        Ft = (FtI + FtJ) / 2
+        for tv in 1:3
+            X = fill(0.0, 2) # must allocate here, the scatter3d stores reference to it
+            Y = fill(0.0, 2)
+            Z = fill(0.0, 2)
+            X[1] = centroid[1]
+            Y[1] = centroid[2]
+            Z[1] = centroid[3]
+            X[2] = X[1] .+ triad_length*Ft[1, tv]
+            Y[2] = Y[1] .+ triad_length*Ft[2, tv]
+            Z[2] = Z[1] .+ triad_length*Ft[3, tv]
+            push!(t, scatter3d(;x=X, y=Y, z=Z, mode="lines", line=attr(color=colors[tv], width=lwidth), kwargs...))
+        end
+    end
+@show length(t)
     return t
 end
 
