@@ -122,27 +122,27 @@ end
 
 function _circular(dimensions, buffers, x1x2_vector, R1I, R1J; kwargs...)
     radius = dimensions[1]
-    F0, x0, xt, c, s, xc, faces, facecolors = buffers
+    F0, x0, xt, eecc, c, s, xc, faces, facecolors = buffers
     L0, F0 = _beam_local_frame!(F0, x0, x1x2_vector)
     FtI=R1I*F0;
     FtJ=R1J*F0;
     nseg = length(c)-1
     for j in 1:nseg+1
-        xc[j,:] = xt[1,:]+radius*c[j]*FtI[:,2]+radius*s[j]*FtI[:,3];
-        xc[j+(nseg+1),:] = xt[2,:]+radius*c[j]*FtJ[:,2]+radius*s[j]*FtJ[:,3];
+        xc[j,:] = xt[1,:] + eecc[1]*FtI[:,1] + (eecc[2]+radius)*c[j]*FtI[:,2] + (eecc[3]+radius)*s[j]*FtI[:,3];
+        xc[j+(nseg+1),:] = xt[2,:] + eecc[2]*FtI[:,1] + (eecc[2]+radius)*c[j]*FtI[:,2] + (eecc[3]+radius)*s[j]*FtI[:,3];
     end
     return mesh3d(;x=xc[:, 1],y=xc[:, 2], z=xc[:, 3], i=faces[:, 1].-1, j=faces[:, 2].-1, k=faces[:, 3].-1, facecolor=facecolors, kwargs...)
 end
 
 function _rectangular(dimensions, buffers, x1x2_vector, R1I, R1J; kwargs...)
     b, h = dimensions[1:2]./2 # departures from the midline by half the dimension
-    F0, x0, xt, c, s, xc, faces, facecolors = buffers
+    F0, x0, xt, eecc, c, s, xc, faces, facecolors = buffers
     L0, F0 = _beam_local_frame!(F0, x0, x1x2_vector)
     FtI=R1I*F0;
     FtJ=R1J*F0;
     for j in 1:4+1
-        xc[j,:] = xt[1,:]+c[j]*b*FtI[:,2]+s[j]*h*FtI[:,3];
-        xc[j+(4+1),:] = xt[2,:]+c[j]*b*FtJ[:,2]+s[j]*h*FtJ[:,3];
+        xc[j,:] = xt[1,:] + eecc[1]*FtI[:,1] + c[j]*(eecc[2]+b)*FtI[:,2] + s[j]*(eecc[3]+h)*FtI[:,3];
+        xc[j+(4+1),:] = xt[2,:] + eecc[2]*FtI[:,1] + c[j]*(eecc[2]+b)*FtJ[:,2] + s[j]*(eecc[3]+h)*FtJ[:,3];
     end
     return mesh3d(;x=xc[:, 1],y=xc[:, 2], z=xc[:, 3], i=faces[:, 1].-1, j=faces[:, 2].-1, k=faces[:, 3].-1, facecolor=facecolors, kwargs...)
 end
@@ -169,6 +169,10 @@ function plot_solid(fens, fes; kwargs...)
     if :R in keys(kwargs)
         R = kwargs[:R]; kwargs = removepair(kwargs, :R)
     end
+    ecc = fill(0.0, count(fes), 4)
+    if :ecc in keys(kwargs)
+        ecc = kwargs[:ecc]; kwargs = removepair(kwargs, :ecc)
+    end
     facecolor = "rgb(255, 155, 55)"
     if :facecolor in keys(kwargs)
         facecolor = kwargs[:facecolor]; kwargs = removepair(kwargs, :facecolor)
@@ -181,6 +185,7 @@ function plot_solid(fens, fes; kwargs...)
     xt = fill(0.0, size(x0))
     R1I = Matrix(1.0 * I, 3, 3)
     R1J = Matrix(1.0 * I, 3, 3)
+    eecc = fill(0.0, 4)
     if dfes.crosssection.shape == "circle"
         nseg = 13
         v = vec((collect(1:nseg+1).-1)./nseg)
@@ -193,7 +198,7 @@ function plot_solid(fens, fes; kwargs...)
         end
         xc = zeros(2*(nseg+1),3);
         facecolors = fill(facecolor, 2*nseg)
-        buffers = (F0, x0, xt, c, s, xc, faces, facecolors)
+        buffers = (F0, x0, xt, eecc, c, s, xc, faces, facecolors)
         _draw = _circular
     elseif dfes.crosssection.shape == "rectangle"
         faces = fill(0, 2*4, 3)
@@ -205,7 +210,7 @@ function plot_solid(fens, fes; kwargs...)
         s = [1, 1, -1, -1, 1]
         xc = zeros(2*(4+1),3);
         facecolors = fill(facecolor, 2*4)
-        buffers = (F0, x0, xt, c, s, xc, faces, facecolors)
+        buffers = (F0, x0, xt, eecc, c, s, xc, faces, facecolors)
         _draw = _rectangular
     end
 
@@ -218,6 +223,7 @@ function plot_solid(fens, fes; kwargs...)
         xt[2, :] .= x[c[2], :] .+ u[c[2], :]
         R1I[:] .= R[c[1], :]
         R1J[:] .= R[c[2], :]
+        eecc .= ecc[i, :]
         push!(t, _draw(dfes.dimensions[i], buffers, dfes.x1x2_vector[i], R1I, R1J; kwargs...))
     end
     return t
