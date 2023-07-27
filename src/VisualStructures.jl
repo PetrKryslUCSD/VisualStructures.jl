@@ -153,6 +153,7 @@ end
 Plot beam structure as solid
 """
 function plot_solid(fens, fes; kwargs...)
+    dfes = delegateof(fes)
     x = deepcopy(fens.xyz)
     if :x in keys(kwargs)
         x = kwargs[:x]; kwargs = removepair(kwargs, :x)
@@ -180,7 +181,7 @@ function plot_solid(fens, fes; kwargs...)
     xt = fill(0.0, size(x0))
     R1I = Matrix(1.0 * I, 3, 3)
     R1J = Matrix(1.0 * I, 3, 3)
-    if delegateof(fes).crosssection.shape == "circle"
+    if dfes.crosssection.shape == "circle"
         nseg = 13
         v = vec((collect(1:nseg+1).-1)./nseg)
         c = cos.(2*pi*v);
@@ -194,7 +195,7 @@ function plot_solid(fens, fes; kwargs...)
         facecolors = fill(facecolor, 2*nseg)
         buffers = (F0, x0, xt, c, s, xc, faces, facecolors)
         _draw = _circular
-    elseif delegateof(fes).crosssection.shape == "rectangle"
+    elseif dfes.crosssection.shape == "rectangle"
         faces = fill(0, 2*4, 3)
         for i in 1:4
             faces[i, :] .= (i+1, i, i+4+1)
@@ -217,7 +218,7 @@ function plot_solid(fens, fes; kwargs...)
         xt[2, :] .= x[c[2], :] .+ u[c[2], :]
         R1I[:] .= R[c[1], :]
         R1J[:] .= R[c[2], :]
-        push!(t, _draw(fes.dimensions[i], buffers, fes.x1x2_vector[i], R1I, R1J; kwargs...))
+        push!(t, _draw(dfes.dimensions[i], buffers, dfes.x1x2_vector[i], R1I, R1J; kwargs...))
     end
     return t
 end
@@ -332,6 +333,12 @@ end
     plot_midline(fens, fes; color = "rgb(155, 155, 255)", lwidth = 4)
 
 Plot the midsurface
+
+- `x`: array of node locations
+- `u`: array of node displacements
+- `R`: array of node rotation matrices
+- `facecolor`: color of the surface
+- `lwidth`: house thick should the lines be?
 """
 function plot_midsurface(fens, fes; kwargs...) 
     x = deepcopy(fens.xyz)
@@ -364,6 +371,12 @@ end
     plot_triads(fens; kwargs...)
 
 Plot the node triads.
+
+- `x`: array of node locations
+- `u`: array of node displacements
+- `R`: array of node rotation matrices
+- `triad_length`: how long should a triad arrow be?
+- `lwidth`: house thick should the lines be?
 """
 function plot_triads(fens; kwargs...)
     x = deepcopy(fens.xyz)
