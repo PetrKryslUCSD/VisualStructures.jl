@@ -506,7 +506,6 @@ function plot_local_frames(fens, fes; kwargs...)
             push!(t, scatter3d(;x=X, y=Y, z=Z, mode="lines", line=attr(color=colors[tv], width=lwidth), kwargs...))
         end
     end
-@show length(t)
     return t
 end
 
