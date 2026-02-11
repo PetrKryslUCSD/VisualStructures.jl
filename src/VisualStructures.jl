@@ -8,11 +8,11 @@ using Statistics
 
 const BACKGROUNDCOLOR = "rgb(230, 230,230)"
 
-function removepair(nt, key)
+function _removepair(nt, key)
     return (; delete!(Dict(pairs(nt)), key)...)
 end
 
-function addpair(nt, key, val)
+function _addpair(nt, key, val)
     d = Dict()
     for p in pairs(nt)
         d[p[1]] = p[2]
@@ -97,19 +97,19 @@ Plot the midline
 function plot_midline(fens, fes; kwargs...)
     x = deepcopy(fens.xyz)
     if :x in keys(kwargs)
-        x = kwargs[:x]; kwargs = removepair(kwargs, :x)
+        x = kwargs[:x]; kwargs = _removepair(kwargs, :x)
     end
     u = fill(0.0, size(x))
     if :u in keys(kwargs)
-        u = kwargs[:u]; kwargs = removepair(kwargs, :u)
+        u = kwargs[:u]; kwargs = _removepair(kwargs, :u)
     end
     lwidth = 4
     if :lwidth in keys(kwargs)
-        lwidth = kwargs[:lwidth]; kwargs = removepair(kwargs, :lwidth)
+        lwidth = kwargs[:lwidth]; kwargs = _removepair(kwargs, :lwidth)
     end
     color = "rgb(155, 155, 255)"
     if :color in keys(kwargs)
-        color = kwargs[:color]; kwargs = removepair(kwargs, :color)
+        color = kwargs[:color]; kwargs = _removepair(kwargs, :color)
     end
     xyz = fill(0.0, 2, 3)
     t = PlotlyBase.GenericTrace[]
@@ -157,29 +157,29 @@ function plot_solid(fens, fes; kwargs...)
     dfes = delegateof(fes)
     x = deepcopy(fens.xyz)
     if :x in keys(kwargs)
-        x = kwargs[:x]; kwargs = removepair(kwargs, :x)
+        x = kwargs[:x]; kwargs = _removepair(kwargs, :x)
     end
     u = fill(0.0, size(x))
     if :u in keys(kwargs)
-        u = kwargs[:u]; kwargs = removepair(kwargs, :u)
+        u = kwargs[:u]; kwargs = _removepair(kwargs, :u)
     end
     R = fill(0.0, size(x, 1), 9)
     for j in 1:size(R, 1)
         R[j, :] .= Matrix(1.0 * I, 3, 3)[:]
     end
     if :R in keys(kwargs)
-        R = kwargs[:R]; kwargs = removepair(kwargs, :R)
+        R = kwargs[:R]; kwargs = _removepair(kwargs, :R)
     end
     ecc = fill(0.0, count(fes), 4)
     if :ecc in keys(kwargs)
-        ecc = kwargs[:ecc]; kwargs = removepair(kwargs, :ecc)
+        ecc = kwargs[:ecc]; kwargs = _removepair(kwargs, :ecc)
     end
     facecolor = "rgb(255, 155, 55)"
     if :facecolor in keys(kwargs)
-        facecolor = kwargs[:facecolor]; kwargs = removepair(kwargs, :facecolor)
+        facecolor = kwargs[:facecolor]; kwargs = _removepair(kwargs, :facecolor)
     end
     if !(:flatshading in keys(kwargs))
-        kwargs = addpair(kwargs, :flatshading, true); 
+        kwargs = _addpair(kwargs, :flatshading, true); 
     end
     F0 = fill(0.0, 3, 3)
     x0 = fill(0.0, 2, 3)
@@ -241,7 +241,7 @@ Key word arguments:
 function render(traces; kwargs...)
     layout = default_layout_3d(; kwargs...)
     if :layout in keys(kwargs)
-        layout = kwargs[:layout]; kwargs = removepair(kwargs, :layout)
+        layout = kwargs[:layout]; kwargs = _removepair(kwargs, :layout)
     end
     # Default options: show the "save to chart studio" button
     config = PlotConfig(
@@ -250,7 +250,7 @@ function render(traces; kwargs...)
         )
     # Should we override config because they were supplied as argument?
     if :config in keys(kwargs)
-        config = kwargs[:config]; kwargs = removepair(kwargs, :config)
+        config = kwargs[:config]; kwargs = _removepair(kwargs, :config)
     end
     p = plot(traces, layout; config = config)
     display(p)
@@ -260,29 +260,43 @@ end
 """
     default_layout_3d(; kwargs...)
 
-Set up the default layout for three-dimensional plots
+Set up the default layout for three-dimensional plots.
+
+Key word arguments:
+- `aspectratio = "data"`: plotly.js tries to be smart by scaling back the scene to a cube when x/y/z are too dissimilar. By setting scene.aspectratio: 'data', the x/y/z range are always honored.
+- `title = ""`: title of the plot           
+- `autosize = true`: should the plot be autosized?
+- `width = 360`: width of the plot (if autosize is false)
+- `height = 240`: height of the plot (if autosize is false)
+
+Example:
+```
+    layout = default_layout_3d(autosize=false, width=300, height=300, 
+            title="Eigenvalue")
+    pl = render(plots, layout = layout)
+```
 """
 function default_layout_3d(; kwargs...)
     aspectratio = "data" # plotly.js tries to be smart by scaling back the scene to a cube when x/y/z are too dissimilar.
     # By setting scene.aspectratio: 'data', the x/y/z range are always honored.
     if :aspectratio in keys(kwargs)
-        aspectratio = kwargs[:aspectratio]; kwargs = removepair(kwargs, :aspectratio)
+        aspectratio = kwargs[:aspectratio]; kwargs = _removepair(kwargs, :aspectratio)
     end
     title = ""
     if :title in keys(kwargs)
-        title = kwargs[:title]; kwargs = removepair(kwargs, :title)
+        title = kwargs[:title]; kwargs = _removepair(kwargs, :title)
     end
     autosize = true
     if :autosize in keys(kwargs)
-        autosize = kwargs[:autosize]; kwargs = removepair(kwargs, :autosize)
+        autosize = kwargs[:autosize]; kwargs = _removepair(kwargs, :autosize)
     end
     width = 360
     if :width in keys(kwargs)
-        width = kwargs[:width]; kwargs = removepair(kwargs, :width)
+        width = kwargs[:width]; kwargs = _removepair(kwargs, :width)
     end
     height = 240
     if :height in keys(kwargs)
-        height = kwargs[:height]; kwargs = removepair(kwargs, :height)
+        height = kwargs[:height]; kwargs = _removepair(kwargs, :height)
     end
     scene=attr(
         xaxis = attr(title="X", gridcolor="rgb(255, 255, 255)",
@@ -350,19 +364,19 @@ Plot the midsurface
 function plot_midsurface(fens, fes; kwargs...) 
     x = deepcopy(fens.xyz)
     if :x in keys(kwargs)
-        x = kwargs[:x]; kwargs = removepair(kwargs, :x)
+        x = kwargs[:x]; kwargs = _removepair(kwargs, :x)
     end
     u = fill(0.0, size(x))
     if :u in keys(kwargs)
-        u = kwargs[:u]; kwargs = removepair(kwargs, :u)
+        u = kwargs[:u]; kwargs = _removepair(kwargs, :u)
     end
     lwidth = 4
     if :lwidth in keys(kwargs)
-        lwidth = kwargs[:lwidth]; kwargs = removepair(kwargs, :lwidth)
+        lwidth = kwargs[:lwidth]; kwargs = _removepair(kwargs, :lwidth)
     end
     facecolor = "rgb(155, 155, 255)"
     if :facecolor in keys(kwargs)
-        facecolor = kwargs[:facecolor]; kwargs = removepair(kwargs, :facecolor)
+        facecolor = kwargs[:facecolor]; kwargs = _removepair(kwargs, :facecolor)
     end
     facecolors = fill(facecolor, count(fes))
     faces = connasarray(fes).-1
@@ -388,26 +402,26 @@ Plot the node triads.
 function plot_triads(fens; kwargs...)
     x = deepcopy(fens.xyz)
     if :x in keys(kwargs)
-        x = kwargs[:x]; kwargs = removepair(kwargs, :x)
+        x = kwargs[:x]; kwargs = _removepair(kwargs, :x)
     end
     u = fill(0.0, size(x))
     if :u in keys(kwargs)
-        u = kwargs[:u]; kwargs = removepair(kwargs, :u)
+        u = kwargs[:u]; kwargs = _removepair(kwargs, :u)
     end
     R = fill(0.0, size(x, 1), 9)
     for j in 1:size(R, 1)
         R[j, :] .= Matrix(1.0 * I, 3, 3)[:]
     end
     if :R in keys(kwargs)
-        R = kwargs[:R]; kwargs = removepair(kwargs, :R)
+        R = kwargs[:R]; kwargs = _removepair(kwargs, :R)
     end
     triad_length = 1.0
     if :triad_length in keys(kwargs)
-        triad_length = kwargs[:triad_length]; kwargs = removepair(kwargs, :triad_length)
+        triad_length = kwargs[:triad_length]; kwargs = _removepair(kwargs, :triad_length)
     end
     lwidth = 4
     if :lwidth in keys(kwargs)
-        lwidth = kwargs[:lwidth]; kwargs = removepair(kwargs, :lwidth)
+        lwidth = kwargs[:lwidth]; kwargs = _removepair(kwargs, :lwidth)
     end
 
     R1I = Matrix(1.0 * I, 3, 3)
@@ -448,26 +462,26 @@ function plot_local_frames(fens, fes; kwargs...)
     dfes = delegateof(fes)
     x = deepcopy(fens.xyz)
     if :x in keys(kwargs)
-        x = kwargs[:x]; kwargs = removepair(kwargs, :x)
+        x = kwargs[:x]; kwargs = _removepair(kwargs, :x)
     end
     u = fill(0.0, size(x))
     if :u in keys(kwargs)
-        u = kwargs[:u]; kwargs = removepair(kwargs, :u)
+        u = kwargs[:u]; kwargs = _removepair(kwargs, :u)
     end
     R = fill(0.0, size(x, 1), 9)
     for j in 1:size(R, 1)
         R[j, :] .= Matrix(1.0 * I, 3, 3)[:]
     end
     if :R in keys(kwargs)
-        R = kwargs[:R]; kwargs = removepair(kwargs, :R)
+        R = kwargs[:R]; kwargs = _removepair(kwargs, :R)
     end
     triad_length = 1.0
     if :triad_length in keys(kwargs)
-        triad_length = kwargs[:triad_length]; kwargs = removepair(kwargs, :triad_length)
+        triad_length = kwargs[:triad_length]; kwargs = _removepair(kwargs, :triad_length)
     end
     lwidth = 4
     if :lwidth in keys(kwargs)
-        lwidth = kwargs[:lwidth]; kwargs = removepair(kwargs, :lwidth)
+        lwidth = kwargs[:lwidth]; kwargs = _removepair(kwargs, :lwidth)
     end
 
     colors = ["rgb(255, 15, 25)", "rgb(15, 255, 25)", "rgb(25, 15, 255)"]

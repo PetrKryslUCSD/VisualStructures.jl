@@ -12,6 +12,7 @@ This is enabled with [PlotlyJS.jl](https://github.com/JuliaPlots/PlotlyJS.jl) .
 
 ## News
 
+- 02/11/2026: Update documentation.
 - 12/10/2024: Update to Julia 1.11.
 - 04/19/2024: Update to Julia 1.10.
 - 05/27/2023: There is currently an error in Blink: https://github.com/JuliaGizmos/Blink.jl/issues/308
